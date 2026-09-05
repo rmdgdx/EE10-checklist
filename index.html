@@ -1,0 +1,1204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An offline checklist and proposal-readiness evaluator for electrical engineering research concepts, informed by Scopus quality dimensions.">
+  <title>Electrical Engineering Proposal Quality Evaluator</title>
+  <style>
+    :root {
+      --royal: #123fa3;
+      --royal-dark: #08296f;
+      --royal-soft: #eaf0ff;
+      --gold: #d6ad2f;
+      --gold-dark: #8b6911;
+      --gold-soft: #fff8df;
+      --ink: #172033;
+      --muted: #5d687c;
+      --line: #d9e0ec;
+      --surface: #ffffff;
+      --canvas: #f4f7fc;
+      --success: #176b45;
+      --warning: #9a5b00;
+      --danger: #a12b31;
+      --shadow: 0 16px 44px rgba(8, 41, 111, 0.10);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 92% 2%, rgba(214, 173, 47, 0.16), transparent 22rem),
+        linear-gradient(180deg, #eef3ff 0, var(--canvas) 24rem, var(--canvas) 100%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    button, input, textarea { font: inherit; }
+
+    a { color: var(--royal); }
+    a:hover { color: var(--royal-dark); }
+
+    .skip-link {
+      position: fixed;
+      left: 1rem;
+      top: -5rem;
+      z-index: 100;
+      padding: .75rem 1rem;
+      color: #fff;
+      background: var(--royal-dark);
+      border-radius: .5rem;
+    }
+
+    .skip-link:focus { top: 1rem; }
+
+    .masthead {
+      color: #fff;
+      background: linear-gradient(126deg, var(--royal-dark), var(--royal) 72%, #315fc3);
+      border-bottom: 5px solid var(--gold);
+    }
+
+    .masthead-inner {
+      width: min(1180px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 1.45rem 0 1.55rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .mark {
+      width: 3.4rem;
+      height: 3.4rem;
+      flex: 0 0 3.4rem;
+      display: grid;
+      place-items: center;
+      color: var(--royal-dark);
+      background: var(--gold);
+      border: 2px solid #ffe68c;
+      border-radius: 14px;
+      font-weight: 900;
+      letter-spacing: -.05em;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, .18);
+    }
+
+    .masthead h1 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.45rem, 3vw, 2.15rem);
+      line-height: 1.12;
+      letter-spacing: -.02em;
+    }
+
+    .masthead p {
+      margin: .35rem 0 0;
+      color: #dfe8ff;
+      font-size: .96rem;
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 2rem));
+      margin: 1.5rem auto 4rem;
+    }
+
+    .notice {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: .85rem;
+      align-items: start;
+      margin-bottom: 1.2rem;
+      padding: 1rem 1.1rem;
+      background: var(--gold-soft);
+      border: 1px solid #ead58c;
+      border-left: 5px solid var(--gold);
+      border-radius: 12px;
+      color: #4e3c0d;
+    }
+
+    .notice-symbol {
+      width: 1.65rem;
+      height: 1.65rem;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--gold-dark);
+      font-weight: 800;
+    }
+
+    .notice p { margin: 0; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 19rem;
+      gap: 1.25rem;
+      align-items: start;
+    }
+
+    .main-column { min-width: 0; }
+
+    .side-column {
+      position: sticky;
+      top: 1rem;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .panel {
+      margin-bottom: 1.15rem;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .panel-head {
+      padding: 1.1rem 1.25rem .95rem;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(90deg, rgba(18, 63, 163, .06), transparent);
+    }
+
+    .eyebrow {
+      display: block;
+      margin-bottom: .25rem;
+      color: var(--gold-dark);
+      font-size: .77rem;
+      font-weight: 850;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .panel h2, .panel h3 { margin: 0; color: var(--royal-dark); }
+
+    .panel h2 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.38rem;
+      line-height: 1.2;
+    }
+
+    .panel-head p {
+      margin: .35rem 0 0;
+      color: var(--muted);
+      font-size: .93rem;
+    }
+
+    .panel-body { padding: 1.25rem; }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .field { margin-bottom: 1.15rem; }
+    .field:last-child { margin-bottom: 0; }
+
+    label, legend {
+      display: block;
+      margin-bottom: .4rem;
+      color: var(--ink);
+      font-weight: 750;
+    }
+
+    .required { color: var(--danger); }
+
+    .field-note {
+      display: block;
+      margin-top: .4rem;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    .field-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: .4rem;
+      color: var(--muted);
+      font-size: .8rem;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      color: var(--ink);
+      background: #fff;
+      border: 1.5px solid #bdc8d9;
+      border-radius: 10px;
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+
+    input[type="text"] { min-height: 3rem; padding: .72rem .82rem; }
+
+    textarea {
+      min-height: 9rem;
+      padding: .8rem .85rem;
+      line-height: 1.55;
+      resize: vertical;
+    }
+
+    input:focus, textarea:focus {
+      border-color: var(--royal);
+      box-shadow: 0 0 0 4px rgba(18, 63, 163, .13);
+    }
+
+    [aria-invalid="true"] {
+      border-color: var(--danger) !important;
+      background: #fff8f8 !important;
+    }
+
+    .error-message {
+      display: none;
+      margin-top: .38rem;
+      color: var(--danger);
+      font-size: .82rem;
+      font-weight: 700;
+    }
+
+    [aria-invalid="true"] + .error-message { display: block; }
+
+    .check-groups {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    fieldset.check-group {
+      min-width: 0;
+      margin: 0;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fbfcff;
+    }
+
+    .check-group legend {
+      padding: 0 .35rem;
+      color: var(--royal-dark);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1rem;
+    }
+
+    .check-item {
+      display: grid;
+      grid-template-columns: 1.15rem 1fr;
+      gap: .65rem;
+      align-items: start;
+      margin: .15rem 0 .72rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .check-item:last-child { margin-bottom: .1rem; }
+
+    input[type="checkbox"] {
+      width: 1.05rem;
+      height: 1.05rem;
+      margin: .24rem 0 0;
+      accent-color: var(--royal);
+    }
+
+    .check-item small {
+      display: block;
+      margin-top: .12rem;
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 400;
+    }
+
+    .mini-panel {
+      padding: 1rem;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 10px 28px rgba(8, 41, 111, .08);
+    }
+
+    .mini-panel h3 {
+      margin: 0 0 .6rem;
+      color: var(--royal-dark);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.05rem;
+    }
+
+    .progress-track {
+      height: .7rem;
+      overflow: hidden;
+      background: #e8edf6;
+      border-radius: 999px;
+    }
+
+    .progress-fill {
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--royal), #4776d9 70%, var(--gold));
+      border-radius: inherit;
+      transition: width .25s ease;
+    }
+
+    .progress-copy {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: .45rem;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    .criteria-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .criteria-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: .75rem;
+      padding: .48rem 0;
+      border-bottom: 1px dashed var(--line);
+      font-size: .82rem;
+    }
+
+    .criteria-list li:last-child { border-bottom: 0; }
+    .criteria-list strong { color: var(--royal-dark); }
+
+    .privacy-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    .action-panel {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      background: var(--royal-dark);
+      border: 1px solid var(--royal-dark);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .action-panel p {
+      flex: 1 1 20rem;
+      margin: 0;
+      color: #dce7ff;
+      font-size: .9rem;
+    }
+
+    .actions { display: flex; flex-wrap: wrap; gap: .65rem; }
+
+    .button {
+      min-height: 2.85rem;
+      padding: .7rem 1.05rem;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 800;
+      transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+    }
+
+    .button:hover { transform: translateY(-1px); }
+    .button:focus-visible { outline: 3px solid #ffe68c; outline-offset: 3px; }
+
+    .button-primary {
+      color: var(--royal-dark);
+      background: var(--gold);
+      border-color: #f0d578;
+      box-shadow: 0 8px 22px rgba(214, 173, 47, .25);
+    }
+
+    .button-primary:hover { background: #e2ba40; }
+
+    .button-secondary {
+      color: #fff;
+      background: transparent;
+      border-color: rgba(255, 255, 255, .55);
+    }
+
+    .button-secondary:hover { background: rgba(255, 255, 255, .1); }
+
+    .results { margin-top: 1.4rem; }
+    .results[hidden] { display: none; }
+
+    .result-hero {
+      display: grid;
+      grid-template-columns: 10.2rem minmax(0, 1fr);
+      gap: 1.35rem;
+      align-items: center;
+      padding: 1.4rem;
+      color: #fff;
+      background: linear-gradient(128deg, var(--royal-dark), var(--royal));
+      border: 1px solid #2c5bc2;
+      border-bottom: 5px solid var(--gold);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .score-ring {
+      --score-angle: 0deg;
+      width: 9rem;
+      height: 9rem;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(var(--gold) var(--score-angle), rgba(255,255,255,.17) 0);
+      border-radius: 50%;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.24);
+    }
+
+    .score-center {
+      width: 7rem;
+      height: 7rem;
+      display: grid;
+      place-content: center;
+      text-align: center;
+      background: var(--royal-dark);
+      border-radius: 50%;
+    }
+
+    .score-number {
+      display: block;
+      color: #fff;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 2.35rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .score-total { color: #cbd9fa; font-size: .77rem; }
+
+    .result-hero h2 {
+      margin: 0;
+      color: #fff;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.55rem, 3vw, 2.2rem);
+    }
+
+    .rating-pill {
+      display: inline-flex;
+      align-items: center;
+      margin: .6rem 0 .75rem;
+      padding: .35rem .72rem;
+      color: var(--royal-dark);
+      background: var(--gold);
+      border-radius: 999px;
+      font-size: .84rem;
+      font-weight: 850;
+    }
+
+    .result-summary { margin: 0; color: #e5ecff; }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(18rem, .7fr);
+      gap: 1.15rem;
+      margin-top: 1.15rem;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+    }
+
+    th, td {
+      padding: .74rem .68rem;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      color: #fff;
+      background: var(--royal-dark);
+      font-size: .77rem;
+      letter-spacing: .035em;
+      text-transform: uppercase;
+    }
+
+    th:first-child { border-radius: 8px 0 0 0; }
+    th:last-child { border-radius: 0 8px 0 0; }
+
+    .status {
+      display: inline-block;
+      white-space: nowrap;
+      padding: .2rem .48rem;
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 850;
+    }
+
+    .status-strong { color: var(--success); background: #e6f5ed; }
+    .status-partial { color: var(--warning); background: #fff0d6; }
+    .status-gap { color: var(--danger); background: #fde8e9; }
+
+    .feedback-card {
+      margin-bottom: .9rem;
+      padding: 1rem;
+      background: #fbfcff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    .feedback-card:last-child { margin-bottom: 0; }
+
+    .feedback-card h3 {
+      margin: 0 0 .55rem;
+      color: var(--royal-dark);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.05rem;
+    }
+
+    .feedback-card p { margin: 0; }
+
+    .feedback-card ul, .feedback-card ol {
+      margin: .45rem 0 0;
+      padding-left: 1.25rem;
+    }
+
+    .feedback-card li { margin-bottom: .48rem; }
+
+    .priority-list { counter-reset: priorities; list-style: none; padding: 0 !important; }
+
+    .priority-list li {
+      position: relative;
+      min-height: 2rem;
+      padding-left: 2.45rem;
+    }
+
+    .priority-list li::before {
+      counter-increment: priorities;
+      content: counter(priorities);
+      position: absolute;
+      left: 0;
+      top: .05rem;
+      width: 1.72rem;
+      height: 1.72rem;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: var(--royal);
+      border-radius: 50%;
+      font-size: .75rem;
+      font-weight: 850;
+    }
+
+    .template-box {
+      margin-top: .7rem;
+      padding: .8rem;
+      color: #3f350f;
+      background: var(--gold-soft);
+      border: 1px solid #ead58c;
+      border-radius: 9px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: .92rem;
+    }
+
+    .report-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 1rem;
+    }
+
+    .report-actions .button-secondary {
+      color: var(--royal-dark);
+      border-color: var(--royal);
+      background: #fff;
+    }
+
+    .report-actions .button-secondary:hover { background: var(--royal-soft); }
+
+    footer {
+      width: min(1180px, calc(100% - 2rem));
+      margin: 0 auto 2rem;
+      padding-top: 1.2rem;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+      font-size: .82rem;
+    }
+
+    footer p { margin: .28rem 0; }
+
+    @media (max-width: 900px) {
+      .workspace { grid-template-columns: 1fr; }
+      .side-column { position: static; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .result-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 680px) {
+      .page, .masthead-inner, footer { width: min(100% - 1rem, 1180px); }
+      .masthead-inner { align-items: flex-start; }
+      .mark { width: 2.9rem; height: 2.9rem; flex-basis: 2.9rem; }
+      .grid-3, .check-groups, .side-column { grid-template-columns: 1fr; }
+      .panel-body, .panel-head { padding-left: 1rem; padding-right: 1rem; }
+      .action-panel { align-items: stretch; }
+      .actions, .actions .button { width: 100%; }
+      .result-hero { grid-template-columns: 1fr; text-align: center; }
+      .score-ring { margin: 0 auto; }
+      th, td { min-width: 6.5rem; }
+      th:first-child, td:first-child { min-width: 12rem; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .masthead { border-bottom-width: 3px; }
+      .workspace, .notice, .action-panel, footer, .report-actions { display: none !important; }
+      .page { width: 100%; margin: 0; }
+      .results { margin: 0; }
+      .result-hero, .panel { box-shadow: none; break-inside: avoid; }
+      .result-grid { grid-template-columns: 1fr; }
+      .panel { border-color: #bbb; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to evaluator</a>
+
+  <header class="masthead">
+    <div class="masthead-inner">
+      <div class="mark" aria-hidden="true">EE</div>
+      <div>
+        <h1>Electrical Engineering Proposal Quality Evaluator</h1>
+        <p>Guided checklist, evidence-based readiness rating, and proposal improvement report</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="page" id="main">
+    <aside class="notice" aria-label="Important scope note">
+      <div class="notice-symbol" aria-hidden="true">i</div>
+      <p><strong>Scope:</strong> Scopus evaluates publication sources—not individual student proposals. This educational rubric adapts Scopus quality dimensions such as academic contribution, clarity, readability, international relevance, peer review, and research integrity, then adds electrical-engineering methodology and statistical-analysis standards. A high score does not guarantee publication or indexing.</p>
+    </aside>
+
+    <form id="proposalForm" novalidate>
+      <div class="workspace">
+        <div class="main-column">
+          <section class="panel" aria-labelledby="profileHeading">
+            <div class="panel-head">
+              <span class="eyebrow">Section 1</span>
+              <h2 id="profileHeading">Student profile</h2>
+              <p>Identify the proposal being evaluated.</p>
+            </div>
+            <div class="panel-body grid-3">
+              <div class="field">
+                <label for="studentName">Name <span class="required" aria-hidden="true">*</span></label>
+                <input id="studentName" name="studentName" type="text" autocomplete="name" required placeholder="Full name">
+                <span class="error-message">Please enter the student's name.</span>
+              </div>
+              <div class="field">
+                <label for="subject">Subject <span class="required" aria-hidden="true">*</span></label>
+                <input id="subject" name="subject" type="text" required placeholder="e.g., EE Research Methods">
+                <span class="error-message">Please enter the subject.</span>
+              </div>
+              <div class="field">
+                <label for="section">Section <span class="required" aria-hidden="true">*</span></label>
+                <input id="section" name="section" type="text" required placeholder="e.g., EE 4A">
+                <span class="error-message">Please enter the section.</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="conceptHeading">
+            <div class="panel-head">
+              <span class="eyebrow">Section 2</span>
+              <h2 id="conceptHeading">Research concept</h2>
+              <p>Write enough detail for the evaluator to detect the proposal's problem, contribution, variables, design, and analysis plan.</p>
+            </div>
+            <div class="panel-body">
+              <div class="field">
+                <label for="concept">Concept statement <span class="required" aria-hidden="true">*</span></label>
+                <textarea id="concept" name="concept" required placeholder="State the electrical-engineering problem, context, research gap, objective, proposed contribution, beneficiaries, and expected performance outcome."></textarea>
+                <span class="error-message">Please enter the research concept statement.</span>
+                <div class="field-meta"><span>Suggested: 100–250 words</span><span id="conceptCount">0 words</span></div>
+              </div>
+
+              <div class="field">
+                <label for="variables">Variables and measurements <span class="required" aria-hidden="true">*</span></label>
+                <textarea id="variables" name="variables" required placeholder="Identify independent, dependent, control, or confounding variables. Give operational definitions, units, ranges or levels, sensors/instruments, and measurement frequency."></textarea>
+                <span class="error-message">Please identify and operationalize the variables.</span>
+                <div class="field-meta"><span>Suggested: 60–180 words</span><span id="variablesCount">0 words</span></div>
+              </div>
+
+              <div class="field">
+                <label for="methodology">Methodology <span class="required" aria-hidden="true">*</span></label>
+                <textarea id="methodology" name="methodology" required placeholder="Describe the research design, system or participants, setting, sample/test cases, apparatus, procedure, comparison baseline, repeated trials, calibration, standards, safety, feasibility, and validation plan."></textarea>
+                <span class="error-message">Please describe the proposed methodology.</span>
+                <div class="field-meta"><span>Suggested: 120–300 words</span><span id="methodologyCount">0 words</span></div>
+              </div>
+
+              <div class="field">
+                <label for="analytics">Data analytics / statistics <span class="required" aria-hidden="true">*</span></label>
+                <textarea id="analytics" name="analytics" required placeholder="Match each objective and variable to descriptive statistics, assumptions or diagnostics, inferential tests or predictive models, effect sizes/confidence intervals, error metrics, and validation procedures."></textarea>
+                <span class="error-message">Please provide the data-analysis or statistical plan.</span>
+                <div class="field-meta"><span>Suggested: 80–220 words</span><span id="analyticsCount">0 words</span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="checklistHeading">
+            <div class="panel-head">
+              <span class="eyebrow">Section 3</span>
+              <h2 id="checklistHeading">Proposal quality checklist</h2>
+              <p>Use these items while revising. Checklist completion is displayed separately and does not inflate the evidence-based rating.</p>
+            </div>
+            <div class="panel-body check-groups">
+              <fieldset class="check-group">
+                <legend>Problem and contribution</legend>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>The problem is specific, important, and grounded in an electrical-engineering context.<small>Identify the affected system, users, setting, and measurable consequence.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>Recent literature establishes a defensible research gap.<small>Distinguish a genuine knowledge or performance gap from a merely new location.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>The proposed contribution is novel and technically meaningful.<small>State what will be designed, tested, optimized, compared, or explained.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>The objective is measurable and aligned with the stated problem.<small>Use observable outcomes, performance targets, or testable relationships.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>The study has relevance beyond one classroom or local site.<small>Explain transferability, scalability, or relevance to broader engineering practice.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>The proposal fits a clear EE subfield and potential publication scope.<small>Examples: power, electronics, controls, communications, instrumentation, energy systems.</small></span></label>
+              </fieldset>
+
+              <fieldset class="check-group">
+                <legend>Variables and measurement</legend>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>Independent or predictor variables are identified.<small>Include factor levels, input ranges, or exposure conditions.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>Dependent or outcome variables are identified.<small>Use outcomes that directly answer the objectives.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>Control variables and potential confounders are addressed.<small>Hold important test conditions constant or model their effects.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>Every variable has an operational definition and unit.<small>State exactly how, when, and in what unit it will be measured.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>Instruments, sensors, or data sources are appropriate.<small>Include accuracy, resolution, calibration, reliability, or provenance.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>Outcome thresholds or benchmarks are justified.<small>Use a baseline system, standard, prior study, or engineering specification.</small></span></label>
+              </fieldset>
+
+              <fieldset class="check-group">
+                <legend>Method and integrity</legend>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>The research design can answer the research question.<small>Choose experimental, quasi-experimental, simulation, modeling, design-and-test, or field validation deliberately.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>The sample, dataset, or number of test cases is justified.<small>Use power analysis, precision, coverage, saturation, or engineering test requirements.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>The procedure is reproducible.<small>Specify setup, sequence, duration, operating conditions, and software/hardware versions.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>Repeated trials, controls, and a comparison baseline are included.<small>Separate real improvement from random variation or favorable test conditions.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>Applicable IEEE, IEC, PEC, or other standards are identified.<small>Use the correct standard edition and explain how it governs testing or safety.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>Safety, ethics, privacy, and research integrity are addressed.<small>Cover electrical hazards, human data, permissions, conflicts, and responsible reporting as applicable.</small></span></label>
+              </fieldset>
+
+              <fieldset class="check-group">
+                <legend>Analytics and reporting</legend>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>Descriptive statistics and visualizations match the data type.<small>Plan distributions, central tendency, variability, trends, or signal summaries.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>Inferential tests or models match the variables and design.<small>Account for dependence, repeated measures, time, hierarchy, and nonlinearity.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>Statistical assumptions and model diagnostics will be checked.<small>Plan remedies for violations instead of naming a test only.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>Effect sizes, uncertainty, and confidence intervals will be reported.<small>Do not rely on p-values alone to establish engineering importance.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>Predictive models have honest validation and comparison.<small>Use holdout or cross-validation, leakage prevention, baselines, and relevant error metrics.</small></span></label>
+                <label class="check-item"><input type="checkbox" class="guide-check"><span>Missing data, outliers, measurement error, and limitations are planned.<small>Predefine transparent handling rules and sensitivity analyses.</small></span></label>
+              </fieldset>
+            </div>
+          </section>
+
+          <div class="action-panel">
+            <p>The automated result is a diagnostic aid. Final approval should remain with the research adviser, panel, ethics body, and a statistician or domain expert when appropriate.</p>
+            <div class="actions">
+              <button class="button button-secondary" type="reset">Clear all</button>
+              <button class="button button-primary" type="submit">Rate this proposal</button>
+            </div>
+          </div>
+        </div>
+
+        <aside class="side-column" aria-label="Evaluation guide">
+          <div class="mini-panel">
+            <h3>Checklist progress</h3>
+            <div class="progress-track" role="progressbar" aria-label="Checklist completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="checkProgress">
+              <div class="progress-fill" id="checkProgressFill"></div>
+            </div>
+            <div class="progress-copy"><span id="checkProgressText">0 of 24 checked</span><strong id="checkProgressPct">0%</strong></div>
+          </div>
+
+          <div class="mini-panel">
+            <h3>100-point rubric</h3>
+            <ul class="criteria-list" aria-label="Criterion weights">
+              <li><span>Significance &amp; relevance</span><strong>10</strong></li>
+              <li><span>Gap &amp; novelty</span><strong>12</strong></li>
+              <li><span>Objectives</span><strong>8</strong></li>
+              <li><span>Variables</span><strong>10</strong></li>
+              <li><span>Method rigor</span><strong>14</strong></li>
+              <li><span>Data quality &amp; feasibility</span><strong>10</strong></li>
+              <li><span>Analytics</span><strong>12</strong></li>
+              <li><span>EE validation</span><strong>10</strong></li>
+              <li><span>Ethics &amp; integrity</span><strong>6</strong></li>
+              <li><span>Clarity &amp; literature</span><strong>8</strong></li>
+            </ul>
+          </div>
+
+          <div class="mini-panel">
+            <h3>Privacy</h3>
+            <p class="privacy-note">All scoring happens in this browser. The page makes no network requests and does not transmit or permanently save entries.</p>
+          </div>
+        </aside>
+      </div>
+    </form>
+
+    <section class="results" id="results" hidden aria-live="polite" aria-labelledby="resultsHeading">
+      <div class="result-hero">
+        <div class="score-ring" id="scoreRing" aria-label="Overall proposal score">
+          <div class="score-center"><span class="score-number" id="scoreNumber">0</span><span class="score-total">out of 100</span></div>
+        </div>
+        <div>
+          <span class="eyebrow" style="color:#ffe68c">Evaluation report</span>
+          <h2 id="resultsHeading">Proposal readiness rating</h2>
+          <span class="rating-pill" id="ratingPill">Not rated</span>
+          <p class="result-summary" id="resultSummary"></p>
+        </div>
+      </div>
+
+      <div class="result-grid">
+        <section class="panel" aria-labelledby="breakdownHeading">
+          <div class="panel-head">
+            <h2 id="breakdownHeading">Criterion breakdown</h2>
+            <p>Scores reflect evidence detected in the four proposal entries.</p>
+          </div>
+          <div class="panel-body table-wrap">
+            <table>
+              <thead><tr><th>Criterion</th><th>Weight</th><th>Detected evidence</th><th>Score</th><th>Status</th></tr></thead>
+              <tbody id="scoreTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <div>
+          <section class="panel" aria-labelledby="commentHeading">
+            <div class="panel-head"><h2 id="commentHeading">Evaluator comment</h2></div>
+            <div class="panel-body">
+              <div class="feedback-card"><p id="overallComment"></p></div>
+              <div class="feedback-card">
+                <h3>Evidence already working</h3>
+                <ul id="strengthList"></ul>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <section class="panel" aria-labelledby="recommendationsHeading">
+        <div class="panel-head">
+          <h2 id="recommendationsHeading">Comments and recommendations for improvement</h2>
+          <p>Priorities are ordered by their likely effect on the proposal's quality score.</p>
+        </div>
+        <div class="panel-body">
+          <div class="feedback-card">
+            <h3>Priority revisions</h3>
+            <ol class="priority-list" id="priorityList"></ol>
+          </div>
+          <div class="feedback-card">
+            <h3>Suggested structure for the next revision</h3>
+            <p>Use this sequence to make the proposal easier for an engineering panel and future journal reviewers to evaluate:</p>
+            <div class="template-box">Problem and consequence → evidence-based research gap → measurable objective → proposed technical contribution → operationalized variables → reproducible design and benchmark → analysis matched to each objective → expected engineering significance, limitations, safety, and ethics.</div>
+          </div>
+          <div class="feedback-card">
+            <h3>Decision guidance</h3>
+            <p id="decisionGuidance"></p>
+          </div>
+        </div>
+      </section>
+
+      <div class="report-actions">
+        <button class="button button-secondary" id="printButton" type="button">Print / Save report as PDF</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p><strong>Basis of adaptation:</strong> Scopus Content Selection and Advisory Board dimensions for journal content include academic contribution, abstract clarity, conformity to aims and scope, readability, peer review, international relevance, and publication ethics.</p>
+    <p>Official source: <a href="https://www.elsevier.com/products/scopus/content/content-policy-and-selection" target="_blank" rel="noopener noreferrer">Scopus content policy and selection — Elsevier</a>. The scoring model and thresholds on this page are educational adaptations, not official Scopus criteria for individual proposals.</p>
+  </footer>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const form = document.getElementById("proposalForm");
+      const results = document.getElementById("results");
+      const textAreaIds = ["concept", "variables", "methodology", "analytics"];
+      const requiredIds = ["studentName", "subject", "section", ...textAreaIds];
+
+      const wordCount = (value) => {
+        const clean = value.trim();
+        return clean ? clean.split(/\s+/).filter(Boolean).length : 0;
+      };
+
+      const matches = (text, pattern) => pattern.test(text);
+      const countMatches = (text, pattern) => (text.match(pattern) || []).length;
+
+      textAreaIds.forEach((id) => {
+        const field = document.getElementById(id);
+        const counter = document.getElementById(`${id}Count`);
+        const update = () => { counter.textContent = `${wordCount(field.value)} words`; };
+        field.addEventListener("input", update);
+        update();
+      });
+
+      requiredIds.forEach((id) => {
+        const field = document.getElementById(id);
+        field.addEventListener("input", () => field.removeAttribute("aria-invalid"));
+      });
+
+      const checks = [...document.querySelectorAll(".guide-check")];
+      const progress = document.getElementById("checkProgress");
+      const progressFill = document.getElementById("checkProgressFill");
+      const progressText = document.getElementById("checkProgressText");
+      const progressPct = document.getElementById("checkProgressPct");
+
+      const updateChecklist = () => {
+        const checked = checks.filter((item) => item.checked).length;
+        const pct = Math.round((checked / checks.length) * 100);
+        progress.setAttribute("aria-valuenow", String(pct));
+        progressFill.style.width = `${pct}%`;
+        progressText.textContent = `${checked} of ${checks.length} checked`;
+        progressPct.textContent = `${pct}%`;
+      };
+
+      checks.forEach((item) => item.addEventListener("change", updateChecklist));
+
+      const makeDimension = (label, weight, tests, recommendation) => {
+        const possible = tests.reduce((sum, test) => sum + test.points, 0);
+        const earnedRaw = tests.reduce((sum, test) => sum + (test.pass ? test.points : 0), 0);
+        const fraction = possible ? earnedRaw / possible : 0;
+        const score = Math.round(weight * fraction * 10) / 10;
+        const evidence = tests.filter((test) => test.pass).map((test) => test.evidence);
+        const gaps = tests.filter((test) => !test.pass).map((test) => test.gap);
+        return { label, weight, score, fraction, evidence, gaps, recommendation };
+      };
+
+      const evaluate = (data) => {
+        const concept = data.concept.toLowerCase();
+        const variables = data.variables.toLowerCase();
+        const methodology = data.methodology.toLowerCase();
+        const analytics = data.analytics.toLowerCase();
+        const all = `${concept} ${variables} ${methodology} ${analytics}`;
+
+        const citationCount = countMatches(data.concept + " " + data.methodology + " " + data.analytics, /\([A-Z][^)]{1,80},\s*(?:19|20)\d{2}[a-z]?\)|\[[0-9,;\s–-]+\]|doi\s*:\s*10\./g);
+        const sentenceCount = countMatches(data.concept + " " + data.variables + " " + data.methodology + " " + data.analytics, /[.!?](?:\s|$)/g);
+        const humanStudy = matches(all, /survey|questionnaire|respondent|participant|interview|human subject|student|consumer|household|employee|operator/);
+
+        return [
+          makeDimension("Significance and relevance", 10, [
+            { pass: wordCount(data.concept) >= 90, points: 2, evidence: "A sufficiently developed concept statement", gap: "Develop the concept to roughly 100–250 focused words" },
+            { pass: matches(concept, /problem|challenge|limitation|failure|loss|risk|inefficien|unreliable|outage|harmonic|instability/), points: 2, evidence: "A recognizable engineering problem", gap: "Name the precise engineering problem or performance limitation" },
+            { pass: matches(concept, /efficien|reliab|safe|cost|energy|power quality|performance|accuracy|resilien|sustainab|emission|access/), points: 2, evidence: "A practical consequence or performance concern", gap: "Explain the measurable consequence for reliability, safety, efficiency, cost, or performance" },
+            { pass: matches(concept, /system|facility|community|industry|grid|building|plant|laboratory|household|campus|distribution|microgrid|device|network/), points: 1, evidence: "A defined application context", gap: "Identify the system, setting, users, or beneficiaries" },
+            { pass: matches(concept, /develop|design|evaluate|optimi[sz]e|compare|validate|predict|model|improve|determine/), points: 3, evidence: "A proposed research action or technical contribution", gap: "State exactly what the study will design, test, compare, model, or improve" }
+          ], "Connect the real EE problem to a measurable consequence, identify who or what is affected, and state the technical contribution in one direct paragraph."),
+
+          makeDimension("Research gap and novelty", 12, [
+            { pass: matches(concept, /research gap|gap in|remains unclear|limited evidence|few studies|has not been|underexplored|unresolved|however|despite/), points: 4, evidence: "An explicit knowledge or performance gap", gap: "State an evidence-based research gap rather than only a general problem" },
+            { pass: matches(concept, /previous|prior|existing|conventional|current approach|baseline|state[- ]of[- ]the[- ]art|literature/), points: 2, evidence: "Reference to existing approaches or literature", gap: "Compare the idea with prior studies, conventional systems, or the current best approach" },
+            { pass: matches(concept, /novel|new method|propos|innov|hybrid|adaptive|low-cost|real-time|optimized|improved/), points: 2, evidence: "A claimed differentiating feature", gap: "Describe the novel mechanism, design feature, dataset, comparison, or analytical contribution" },
+            { pass: matches(concept, /contribution|advance|extend|generaliz|transferab|scalab|applicab|insight/), points: 2, evidence: "A broader academic or technical contribution", gap: "Explain what new knowledge or transferable capability the study will add" },
+            { pass: citationCount >= 1, points: 2, evidence: "At least one in-text scholarly citation", gap: "Support the gap with recent peer-reviewed and foundational references" }
+          ], "Build a gap-to-contribution argument: summarize what existing studies achieve, identify what remains unresolved, then explain how the proposed work adds a testable advance."),
+
+          makeDimension("Objective clarity and alignment", 8, [
+            { pass: matches(concept, /objective|aim|purpose|research question|this study (?:will|seeks|aims|proposes)/), points: 3, evidence: "An explicit aim or objective", gap: "Write one explicit overall objective or research question" },
+            { pass: matches(concept, /determine|measure|compare|evaluate|test|estimate|model|predict|design|develop|validate|optimi[sz]e|assess/), points: 3, evidence: "A measurable action verb", gap: "Use a measurable research verb such as determine, compare, evaluate, test, model, or validate" },
+            { pass: matches(all, /%|percent|accuracy|error|efficien|voltage|current|power|frequency|response time|reliab|loss|temperature|signal|throughput|harmonic|factor/), points: 2, evidence: "A measurable electrical or performance outcome", gap: "Attach the objective to a measurable outcome or engineering performance metric" }
+          ], "Rewrite objectives so each names an action, an input or comparison, an outcome variable, and the conditions under which it will be measured."),
+
+          makeDimension("Variables and measurement", 10, [
+            { pass: wordCount(data.variables) >= 55, points: 2, evidence: "A developed variable description", gap: "Expand the variable plan with definitions, levels, units, and instruments" },
+            { pass: matches(variables, /independent variable|predictor|input variable|factor|treatment|exposure/), points: 2, evidence: "Independent or predictor variables identified", gap: "Identify independent variables, predictors, inputs, or factor levels" },
+            { pass: matches(variables, /dependent variable|outcome|response variable|performance metric|output variable/), points: 2, evidence: "Dependent or outcome variables identified", gap: "Identify dependent variables and link them to the objective" },
+            { pass: matches(variables, /control variable|controlled|constant|confound|covariate|ambient|baseline condition/), points: 2, evidence: "Controls or confounders considered", gap: "Specify control variables, operating conditions, and possible confounders" },
+            { pass: matches(variables, /volt|ampere|watt|hertz|ohm|percent|°c|db|second|minute|hour|meter|unit|measured|sensor|meter|analyzer|oscilloscope|accuracy|resolution|sampling rate/), points: 2, evidence: "Measurement units or instruments specified", gap: "Operationalize each variable with units, ranges, instruments, accuracy, and measurement frequency" }
+          ], "Present a compact variable map: variable role → operational definition → unit or scale → range/levels → instrument or source → timing/frequency."),
+
+          makeDimension("Methodological rigor and reproducibility", 14, [
+            { pass: wordCount(data.methodology) >= 110, points: 2, evidence: "A sufficiently developed method", gap: "Expand the method to describe the design, setup, procedure, and validation" },
+            { pass: matches(methodology, /experimental|quasi-experimental|simulation|modeling|modelling|design and (?:test|development)|prototype|field study|laboratory|case study|mixed method|time series/), points: 2, evidence: "A named research design", gap: "Name and justify the research design" },
+            { pass: matches(methodology, /sample size|number of|n\s*=|test cases|dataset|observations|trials|cycles|sites|participants|records/), points: 2, evidence: "Sample, dataset, or test cases considered", gap: "State and justify the sample, dataset size, sites, or number of test cases" },
+            { pass: matches(methodology, /sensor|meter|analyzer|oscilloscope|microcontroller|inverter|converter|simulink|matlab|python|software|hardware|apparatus|instrument|data logger|platform/), points: 2, evidence: "Apparatus, hardware, or software identified", gap: "Identify the apparatus, sensors, hardware, software, and relevant versions/specifications" },
+            { pass: matches(methodology, /procedure|first|then|after|during|each|step|phase|collect|record|measure|implement|conduct/), points: 2, evidence: "A procedural sequence", gap: "Write a reproducible sequence of setup, data collection, processing, and testing steps" },
+            { pass: matches(methodology, /replicat|repeat|random|control group|baseline|benchmark|comparison|cross-over|counterbalanc/), points: 2, evidence: "Replication, control, or comparison", gap: "Add repeated trials and a fair baseline or control condition" },
+            { pass: matches(methodology, /calibrat|reliability|validity|uncertainty|tolerance|verification|quality control|traceab/), points: 2, evidence: "Measurement quality or calibration plan", gap: "Address calibration, measurement uncertainty, validity, reliability, or quality control" }
+          ], "Make the method reproducible: name the design, test environment, sample/test cases, apparatus, operating conditions, sequential procedure, repeated trials, calibration, and baseline."),
+
+          makeDimension("Data quality and feasibility", 10, [
+            { pass: matches(methodology, /power analysis|sample size calculation|margin of error|precision|coverage|minimum sample|number of trials|replicat/), points: 2, evidence: "A basis for sample or test quantity", gap: "Justify the sample size or number of trials using power, precision, coverage, or a technical standard" },
+            { pass: matches(methodology, /second|minute|hour|day|week|month|frequency|interval|duration|sampling rate|timeframe|period/), points: 2, evidence: "A timing, duration, or sampling-frequency plan", gap: "State the test duration, data-collection period, and sampling frequency" },
+            { pass: matches(all, /missing data|outlier|noise|filter|cleaning|preprocess|data quality|invalid reading|sensor drift|anomal/), points: 2, evidence: "A data-quality or preprocessing plan", gap: "Predefine how noise, outliers, missing readings, drift, and invalid observations will be handled" },
+            { pass: matches(methodology, /feasib|available|access|budget|cost|resource|schedule|timeline|laboratory|equipment|permission/), points: 2, evidence: "Feasibility or resource access considered", gap: "Confirm access to data/equipment and give a realistic schedule, budget, or resource plan" },
+            { pass: matches(all, /data management|backup|storage|repository|version control|documentation|audit trail|codebook|metadata/), points: 2, evidence: "A data-management or documentation plan", gap: "Add secure storage, file naming, metadata, backups, and version-control procedures" }
+          ], "Show that the work can be completed with valid data: justify test quantity, define duration/frequency, plan data cleaning, confirm resources, and document data management."),
+
+          makeDimension("Data analytics and statistics", 12, [
+            { pass: wordCount(data.analytics) >= 75, points: 2, evidence: "A developed analytical plan", gap: "Expand the analysis plan and map it to each objective" },
+            { pass: matches(analytics, /mean|median|standard deviation|variance|interquartile|frequency|percentage|distribution|descriptive|visuali[sz]|histogram|boxplot/), points: 1.5, evidence: "Descriptive statistics or visualization", gap: "Specify descriptive statistics and plots suited to each variable's scale and distribution" },
+            { pass: matches(analytics, /t-test|anova|ancova|manova|regression|correlation|chi-square|nonparametric|mann-whitney|kruskal|mixed model|time series|arima|machine learning|random forest|svm|neural|optimization|fourier|wavelet/), points: 2, evidence: "An inferential, predictive, or signal-analysis method", gap: "Name a test or model that matches the design, variables, and dependence structure" },
+            { pass: matches(analytics, /assumption|normality|homogeneity|linearity|independence|multicollinearity|residual|diagnostic|stationarity|autocorrelation/), points: 2, evidence: "Assumption checks or model diagnostics", gap: "State the assumptions/diagnostics and what will be done if they fail" },
+            { pass: matches(analytics, /effect size|confidence interval|uncertainty interval|cohen|eta squared|odds ratio|standardized|practical significance/), points: 1.5, evidence: "Effect size or uncertainty reporting", gap: "Plan effect sizes and confidence/uncertainty intervals, not p-values alone" },
+            { pass: matches(analytics, /cross-validation|cross validation|holdout|train(?:ing)? set|test set|validation set|bootstrap|sensitivity analysis|external validation|rmse|mae|mape|r-squared|r²|f1|precision|recall|auc/), points: 2, evidence: "Validation or performance metrics", gap: "For predictive work, add a leakage-safe validation scheme, baseline, and relevant error metrics" },
+            { pass: matches(analytics, /objective|research question|independent|dependent|predictor|outcome|hypothesis|each variable/), points: 1, evidence: "Analysis linked to objectives or variables", gap: "Map each objective/hypothesis and variable to a specific statistical procedure" }
+          ], "Create an objective-to-analysis matrix showing outcome, predictor, data type, descriptive summary, test/model, assumptions, effect size, validation, and decision rule."),
+
+          makeDimension("Electrical-engineering technical validation", 10, [
+            { pass: matches(all, /voltage|current|power|energy|circuit|electrical|electronic|signal|control system|microgrid|motor|transformer|inverter|converter|communication|sensor|impedance|frequency|battery/), points: 2, evidence: "Clear electrical-engineering content", gap: "Make the electrical-engineering domain and technical mechanism explicit" },
+            { pass: matches(all, /ieee|iec|pec|nec|iso|astm|standard|code requirement/), points: 2, evidence: "A technical standard or code", gap: "Identify applicable IEEE, IEC, PEC/NEC, ISO, or other testing and safety standards" },
+            { pass: matches(methodology, /prototype|simulation|hardware-in-the-loop|hil|laboratory|field test|pilot|experimental setup|test bench|digital twin/), points: 2, evidence: "A technical test environment", gap: "Include simulation, prototype, laboratory, hardware-in-the-loop, or field validation as appropriate" },
+            { pass: matches(all, /baseline|benchmark|reference model|conventional|control condition|state[- ]of[- ]the[- ]art|comparison/), points: 2, evidence: "A comparison baseline or benchmark", gap: "Compare against a defensible baseline, conventional design, standard, or state-of-the-art method" },
+            { pass: matches(all, /efficien|accuracy|rmse|mae|mape|thd|total harmonic|power factor|voltage regulation|energy loss|response time|settling time|overshoot|signal-to-noise|snr|bit error|reliab|availability|temperature rise/), points: 2, evidence: "A domain-relevant performance metric", gap: "Define technical performance metrics and acceptable thresholds" }
+          ], "Strengthen engineering validity by combining an applicable standard, realistic test environment, comparison baseline, and domain-specific performance thresholds."),
+
+          makeDimension("Ethics, safety, and research integrity", 6, [
+            { pass: matches(all, /electrical safety|risk assessment|hazard|lockout|personal protective|ppe|isolation|grounding|overcurrent|emergency|safe operating|safety protocol/), points: 2, evidence: "Electrical safety or hazard controls", gap: "Add hazard identification and electrical-safety controls for construction, testing, and fieldwork" },
+            { pass: humanStudy ? matches(all, /ethics|consent|privacy|confidential|anonym|institutional review|data protection|permission/) : matches(all, /ethics|not applicable|no human participants|research integrity|responsible|permission|license/), points: 2, evidence: humanStudy ? "Human-participant ethics or privacy considered" : "Ethics applicability or responsible-use statement", gap: humanStudy ? "Address ethics review, informed consent, privacy, and secure handling of participant data" : "State why human-participant ethics is not applicable and address permissions, licenses, or responsible use" },
+            { pass: matches(all, /reproduc|code|repository|audit trail|transparent|limitation|conflict of interest|data availability|version control|preregister/), points: 2, evidence: "Transparency, reproducibility, or limitations", gap: "Plan transparent documentation, reproducible code/data where possible, limitations, and conflict disclosure" }
+          ], "Add a proportionate integrity section covering electrical hazards, permissions/ethics, privacy where relevant, transparent reporting, reproducibility, and limitations."),
+
+          makeDimension("Clarity, literature, and scope", 8, [
+            { pass: wordCount(data.concept) >= 90 && wordCount(data.variables) >= 55 && wordCount(data.methodology) >= 110 && wordCount(data.analytics) >= 75, points: 2, evidence: "All four sections contain substantive detail", gap: "Provide sufficient detail in every required section" },
+            { pass: citationCount >= 2, points: 2, evidence: "Multiple in-text scholarly citations", gap: "Use several recent, relevant peer-reviewed sources plus foundational standards/studies" },
+            { pass: sentenceCount >= 10, points: 2, evidence: "Ideas are expressed in complete explanatory sentences", gap: "Use complete, concise sentences and a logical problem-to-method flow" },
+            { pass: matches(all, /scope|delimit|boundary|limited to|inclusion|exclusion|constraint|within|under .*condition/), points: 1, evidence: "Scope or boundary conditions indicated", gap: "Define the system boundary, study setting, operating conditions, and exclusions" },
+            { pass: countMatches(all, /\b\d+(?:\.\d+)?\b/g) >= 2, points: 1, evidence: "Some quantitative specificity", gap: "Replace vague terms with justified quantities, ranges, time periods, or performance targets" }
+          ], "Improve readability and credibility with a clear scope, concise sentences, quantitative detail, and recent Scopus-indexed literature or authoritative technical standards."),
+        ];
+      };
+
+      const ratingFor = (score) => {
+        if (score >= 90) return {
+          label: "Excellent — publication-oriented",
+          summary: "The concept shows strong evidence of a rigorous, technically meaningful proposal. It is good enough to proceed to expert refinement, formal literature verification, and panel review.",
+          comment: "This is a strong proposal concept with most elements expected in publication-oriented engineering research. The next work should focus on verifying every claim and citation, tightening the protocol, and aligning the manuscript with a suitable journal's scope and reporting requirements.",
+          decision: "Proceed to proposal defense preparation after adviser review, reference verification, statistical review, standards checking, and ethics/safety clearance as applicable."
+        };
+        if (score >= 80) return {
+          label: "Very good — strong proposal",
+          summary: "The proposal is good and has a credible path to Scopus-quality research, but several details should be strengthened before approval or data collection.",
+          comment: "The core problem, research design, and analytical direction are promising. The proposal is likely defensible after targeted revisions to the weaker criteria shown below, particularly where claims are not yet operationalized or validated.",
+          decision: "Approve with targeted revisions. Complete the priority actions, then obtain adviser and statistical confirmation before finalizing instruments or collecting data."
+        };
+        if (score >= 70) return {
+          label: "Good foundation — revisions required",
+          summary: "The idea is potentially good, but the current entries do not yet demonstrate enough rigor and publication readiness.",
+          comment: "The proposal has a workable foundation, yet important connections among the gap, variables, method, and analysis remain incomplete. A panel may understand the intention but still be unable to judge validity, reproducibility, or the strength of the expected contribution.",
+          decision: "Return for substantive revision before formal approval. Re-evaluate after the gap, measurement plan, validation, and analysis alignment are made explicit."
+        };
+        if (score >= 60) return {
+          label: "Developing — major revision",
+          summary: "The topic may be viable, but the proposal is not yet good enough for approval in its present form.",
+          comment: "Several core elements are named but not sufficiently specified. Without clearer variables, a reproducible test design, justified data requirements, and appropriate analytics, the study risks producing results that cannot answer its research objective.",
+          decision: "Do not begin data collection yet. Reconstruct the concept using the recommended sequence, confirm feasibility and safety, and have the revised methodology reviewed."
+        };
+        return {
+          label: "Insufficient evidence — redesign needed",
+          summary: "The current entries do not provide enough evidence to classify the proposal as good or methodologically ready.",
+          comment: "The proposal requires redesign rather than surface editing. Begin with a precise electrical-engineering problem and literature gap, then rebuild the objective, variables, method, validation, and analysis as one aligned chain.",
+          decision: "Pause approval and data collection. Meet with the adviser to narrow the problem, verify the research gap, and prepare a complete concept matrix before re-evaluation."
+        };
+      };
+
+      const recommendationText = (dimension) => {
+        const firstGap = dimension.gaps[0] || "Add more explicit supporting evidence";
+        return `${dimension.label} (${dimension.score.toFixed(1)}/${dimension.weight}): ${dimension.recommendation} Immediate gap: ${firstGap}.`;
+      };
+
+      const appendListItem = (list, text) => {
+        const item = document.createElement("li");
+        item.textContent = text;
+        list.appendChild(item);
+      };
+
+      const renderResults = (data, dimensions) => {
+        const total = Math.round(dimensions.reduce((sum, item) => sum + item.score, 0));
+        const rating = ratingFor(total);
+
+        document.getElementById("scoreNumber").textContent = String(total);
+        document.getElementById("scoreRing").style.setProperty("--score-angle", `${total * 3.6}deg`);
+        document.getElementById("ratingPill").textContent = rating.label;
+        document.getElementById("resultSummary").textContent = `${data.studentName}'s proposal for ${data.subject} (${data.section}) scored ${total}/100. ${rating.summary}`;
+        document.getElementById("overallComment").textContent = rating.comment;
+        document.getElementById("decisionGuidance").textContent = rating.decision;
+
+        const body = document.getElementById("scoreTableBody");
+        body.textContent = "";
+        dimensions.forEach((item) => {
+          const row = document.createElement("tr");
+          const statusLabel = item.fraction >= .8 ? "Strong" : item.fraction >= .55 ? "Partial" : "Gap";
+          const statusClass = item.fraction >= .8 ? "status-strong" : item.fraction >= .55 ? "status-partial" : "status-gap";
+          const evidenceText = item.evidence.length ? item.evidence.slice(0, 2).join("; ") : "No clear evidence detected";
+
+          [item.label, String(item.weight), evidenceText, `${item.score.toFixed(1)} / ${item.weight}`].forEach((text) => {
+            const cell = document.createElement("td");
+            cell.textContent = text;
+            row.appendChild(cell);
+          });
+          const statusCell = document.createElement("td");
+          const status = document.createElement("span");
+          status.className = `status ${statusClass}`;
+          status.textContent = statusLabel;
+          statusCell.appendChild(status);
+          row.appendChild(statusCell);
+          body.appendChild(row);
+        });
+
+        const strengths = document.getElementById("strengthList");
+        strengths.textContent = "";
+        const strongest = [...dimensions].sort((a, b) => b.fraction - a.fraction).slice(0, 3);
+        strongest.forEach((item) => {
+          const evidence = item.evidence.length ? item.evidence.slice(0, 2).join(" and ").toLowerCase() : "an initial foundation";
+          appendListItem(strengths, `${item.label}: ${evidence}.`);
+        });
+
+        const priorities = document.getElementById("priorityList");
+        priorities.textContent = "";
+        const ranked = [...dimensions]
+          .map((item) => ({ ...item, deficit: item.weight - item.score }))
+          .sort((a, b) => b.deficit - a.deficit)
+          .slice(0, total >= 90 ? 4 : 6);
+        ranked.forEach((item) => appendListItem(priorities, recommendationText(item)));
+
+        results.hidden = false;
+        results.scrollIntoView({ behavior: "smooth", block: "start" });
+      };
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        let firstInvalid = null;
+
+        requiredIds.forEach((id) => {
+          const field = document.getElementById(id);
+          if (!field.value.trim()) {
+            field.setAttribute("aria-invalid", "true");
+            if (!firstInvalid) firstInvalid = field;
+          } else {
+            field.removeAttribute("aria-invalid");
+          }
+        });
+
+        if (firstInvalid) {
+          firstInvalid.focus();
+          firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+
+        const data = Object.fromEntries(requiredIds.map((id) => [id, document.getElementById(id).value.trim()]));
+        renderResults(data, evaluate(data));
+      });
+
+      form.addEventListener("reset", () => {
+        window.setTimeout(() => {
+          requiredIds.forEach((id) => document.getElementById(id).removeAttribute("aria-invalid"));
+          textAreaIds.forEach((id) => { document.getElementById(`${id}Count`).textContent = "0 words"; });
+          updateChecklist();
+          results.hidden = true;
+          document.getElementById("scoreTableBody").textContent = "";
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }, 0);
+      });
+
+      document.getElementById("printButton").addEventListener("click", () => window.print());
+      updateChecklist();
+    })();
+  </script>
+</body>
+</html>
