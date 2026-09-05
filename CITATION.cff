@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this educational evaluator, please cite it using the metadata below."
+title: "Electrical Engineering Proposal Quality Evaluator"
+type: software
+authors:
+  - family-names: "Guido"
+    given-names: "Ryan Manuel D."
+version: 1.1.0
+date-released: 2026-09-05
+abstract: "A browser-based checklist and automated proposal-readiness evaluator for electrical engineering research concepts."
+keywords:
+  - electrical engineering
+  - research proposal
+  - proposal evaluation
+  - research methodology
+  - data analytics
+license: LicenseRef-All-Rights-Reserved
